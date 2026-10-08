@@ -28,6 +28,21 @@ ADMIN2_ID = 900002
 QUESTION = "Можно ли прийти на практикум без ноутбука?"
 
 
+@pytest.fixture(autouse=True)
+def answer_is_handoff(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Здесь проверяется пересылка владельцу, а не ответы: любой вопрос — «не знаю, передал».
+
+    Быстрые ответы и модель проверяются в tests/test_faq.py и tests/test_llm_service.py.
+    """
+    from app.llm import service
+    from app.texts import t
+
+    async def fake_answer(text: str) -> service.Answer:
+        return service.Answer(t("questions.escalated"), answered=False, handoff=True)
+
+    monkeypatch.setattr(service, "answer_question", fake_answer)
+
+
 def admin_key(admin_id: int = ADMIN_ID) -> StorageKey:
     return StorageKey(bot_id=BOT_ID, chat_id=admin_id, user_id=admin_id)
 

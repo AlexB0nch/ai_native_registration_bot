@@ -43,18 +43,30 @@ class QuestionFlow(StatesGroup):
 async def answer_question_inline(message: Message, text: str) -> None:
     """Ответить на вопрос пользователя прямо в текущем чате.
 
-    Точка входа для TASK-LLM-001 (заменяет только тело); её же вызывает сценарий практикума,
+    Точка входа для TASK-BOT-002 и TASK-LLM-001; её же вызывает сценарий практикума,
     когда на шаге пришёл вопрос вместо ответа (после неё сценарий повторяет свой шаг),
     поэтому состояние FSM здесь не трогается.
-
-    TASK-BOT-002: ответов модели ещё нет — любой вопрос (в том числе просьба позвать
-    человека) передаётся владельцу.
+    TASK-LLM-001: быстрый ответ или модель (`app/llm/service.py`) + кнопка по `cta`;
+    без точного ответа (`handoff`) — вопрос владельцу через `escalate`.
     """
-    question = await escalate(message, None, text) if text.strip() else None
-    if question is None:
+    from app.db import session_scope
+    from app.llm.service import answer_question, cta_keyboard
+    from app.services.people import get_or_create_by_telegram
+
+    if message.from_user is None or message.from_user.is_bot:
+        # Сообщение от имени бота (например, `callback.message`) — вопроса нет, некого и не о чем спрашивать.
         await message.answer(t("fallback_text"), reply_markup=main_menu())
         return
-    await message.answer(t("questions.escalated"))
+
+    answer = await answer_question(text)
+    await message.answer(answer.text, reply_markup=cta_keyboard(answer.cta))
+    if answer.handoff and message.from_user is not None:
+        try:
+            async with session_scope() as session:
+                person = await get_or_create_by_telegram(session, message.from_user, None)
+            await escalate(message, person, text, bot_answer=answer.text if answer.answered else None)
+        except Exception:
+            log.exception("escalate: не удалось передать вопрос владельцу")
 
 
 async def escalate(
