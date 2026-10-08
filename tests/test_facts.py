@@ -193,6 +193,14 @@ def test_all_texts_render() -> None:
     kwargs = {"chat_id": 1, "n": 1}
     # подстановки сценария практикума (TASK-BOT-001)
     kwargs |= {"name": "x", "email": "x", "phone": "x", "username": "x", "source": "x", "count": 1, "title": "x"}
+
+    # TASK-BOT-002: подстановки разделов admin.*, questions.*
+    admin_questions_fields = (
+        *("practicum_total", "practicum_cancelled", "by_channel", "days", "by_day", "by_source", "course"),
+        *("unanswered", "total", "by_tariff", "by_status", "count", "join_url", "recording_url", "url"),
+        *("name", "details", "text", "bot_answer"),
+    )
+    kwargs |= dict.fromkeys(admin_questions_fields, "x")
     for key, value in _walk(get_texts()):
         if isinstance(value, str):
             rendered = t(key, **kwargs)

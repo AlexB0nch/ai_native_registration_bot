@@ -127,7 +127,11 @@ async def test_main_menu_button_clears_state(tg: TgHarness) -> None:
 
 
 async def test_free_text_and_unknown_button_get_fallback(tg: TgHarness) -> None:
+    # Свободный текст с TASK-BOT-002 передаётся владельцу (tests/test_questions_relay.py).
     await tg.send("Сколько стоит курс?")
+    assert tg.session.last_text(USER_ID) == "Передал вопрос Александру, он ответит здесь же."
+    tg.session.clear()
+    await tg.send("/unknown")
     assert tg.session.last_text(USER_ID) == "Выберите действие в меню или нажмите «Задать вопрос»."
     tg.session.clear()
     await tg.click("unknown:button")
