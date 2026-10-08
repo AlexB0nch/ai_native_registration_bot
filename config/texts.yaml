@@ -1,0 +1,102 @@
+# Тексты бота. Тон — CLAUDE.md: на «вы», спокойно и конкретно, не больше одного эмодзи.
+#
+# Даты, время, цены и ссылки здесь НЕ пишутся — только подстановки из config/facts.yaml:
+#   {author_name} {author_name_genitive} {author_role} {author_telegram} {channel_url}
+#   {practicum_title} {practicum_slot} {practicum_date} {practicum_date_short} {practicum_time}
+#   {platform} {practicum_case}
+#   {course_title} {course_dates} {course_time} {course_start_date} {sessions_count} {session_hours}
+#   {demo_day_slot} {demo_day_date_short} {course_format} {course_format_list}
+#   {price_early} {price_standard} {price_pro} {early_until} {pro_max_seats}
+#   {early_name} {standard_name} {pro_name} {early_includes} {standard_includes} {pro_includes}
+#   {course_page} {gift_bot} {gift_after_practicum} {privacy_url}
+# Остальные {поля} передаются в t(key, поле=...). Буквальные фигурные скобки — {{ и }}.
+# Ключи — путь через точку: t("menu.practicum").
+
+welcome: |-
+  Здравствуйте! Я бот {author_name_genitive}, консультанта по операционным трансформациям.
+  Запишу вас на бесплатный практикум {practicum_date_short}, расскажу о курсе «{course_title}» и передам Александру ваш вопрос.
+
+menu:
+  title: Выберите, что вас интересует.
+  practicum: Записаться на практикум {practicum_date_short}
+  course: Что будет на курсе
+  prices: Цены и формат
+  question: Задать вопрос
+
+buttons:
+  course_page: Страница курса
+  practicum: Записаться на практикум {practicum_date_short}
+  menu: В меню
+
+course_about: |-
+  Курс «{course_title}»
+
+  {sessions_count} занятия по {session_hours} часа по субботам: {course_dates}, {course_time}. Демо-день — {demo_day_slot}.
+
+  Что делаем:
+  1. AI-native консультант. Где ИИ даёт эффект в проекте, а где опасен; постановка задачи и проверка источников.
+  2. Аналитика, документы и клиентские материалы. Excel, интервью, управленческая история на нескольких слайдах.
+  3. Память проекта и вайбкодинг. README, журнал решений, GitHub, спецификация и backlog MVP.
+  4. Инструменты для клиента. AI-версии A3, 5 Why, Gemba и трекера инициатив; сборка MVP, план пилота и питч.
+
+  На демо-дне участники показывают свои MVP.
+
+  С чем закончите: AI Project Brief, библиотека промптов и шаблонов, проектная память в GitHub, спецификация и прототип клиентского инструмента, с которым можно идти к клиенту. Программировать уметь не нужно.
+
+prices: |-
+  Тарифы курса «{course_title}»
+
+  {early_name} — {price_early}
+  {early_includes}
+  Действует до {early_until}.
+
+  {standard_name} — {price_standard}
+  {standard_includes}
+
+  {pro_name} — {price_pro}
+  {pro_includes}
+  Не более {pro_max_seats} мест.
+
+  Оплата через ЮKassa после подтверждения участия.
+
+  Формат: {course_format}. Занятия по субботам: {course_dates}, {course_time}.
+
+course_soon: |-
+  Запись на курс откроется скоро. Пока можно прийти на бесплатный практикум {practicum_date_short} — на нём Александр расскажет, как устроен курс.
+
+whoami: "Ваш chat_id: {chat_id}"
+
+# Ответ на текст вне сценария, пока нет TASK-BOT-002 / TASK-LLM-001.
+fallback_text: Выберите действие в меню или нажмите «Задать вопрос».
+
+# Описание бота в Telegram: description ≤ 512 символов, short_description ≤ 120.
+description: |-
+  Бот {author_name_genitive}. Запишет на бесплатный практикум {practicum_date_short} ({practicum_time}) и расскажет о курсе «{course_title}»: программа, даты, цены и формат. Если готового ответа нет, передаст ваш вопрос Александру — он ответит здесь же.
+short_description: Запись на бесплатный практикум {practicum_date_short} и на курс по ИИ для консультантов. Ответы на вопросы о курсе.
+
+commands:
+  start: Главное меню
+  practicum: Записаться на практикум
+  course: Что будет на курсе
+  question: Задать вопрос
+  stats: Статистика записей
+  export: Выгрузка записей (CSV)
+  link: Ссылка на практикум
+  whoami: Мой chat_id
+
+# Названия событий в таблице events (синхронизация из facts.yaml).
+events:
+  course_session: "{course_title}: занятие {n}"
+  demo_day: "{course_title}: демо-день"
+  waitlist: Лист ожидания следующего потока
+
+# --- practicum.* — TASK-BOT-001 ----------------------------------------------------------------
+
+
+# --- admin.*, questions.* — TASK-BOT-002 -------------------------------------------------------
+
+
+# --- site.* — TASK-API-001 ---------------------------------------------------------------------
+
+
+# --- faq.* — TASK-LLM-001 ----------------------------------------------------------------------

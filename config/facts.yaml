@@ -1,0 +1,69 @@
+# Факты о практикуме и курсе — единственный источник дат, времени, цен и ссылок.
+# Источник значений: materials/COURSE-DECISIONS.md и решения владельца (docs/PLAN.md).
+# Время — по Москве (timezone). Время пишется строкой в кавычках: "15:00".
+# После правки: PR → ревью → деплой. Ошибка в схеме остановит запуск бота.
+
+timezone: Europe/Moscow
+
+author:
+  name: Александр Шеин
+  name_genitive: Александра Шеина
+  role: консультант и советник CEO по операционным трансформациям
+  telegram_url: https://t.me/Alex81Shein
+  channel_url: https://t.me/lean4rus
+
+links:
+  course_page: https://alexshein.com/ai-native
+  gift_bot: https://t.me/Alex_shein_gift_bot
+  gift_after_practicum: https://t.me/Alex_shein_gift_bot?start=after_prk
+
+practicum:
+  title: Как консультанту за 90 минут превратить материалы диагностики в управленческую историю и прототип клиентского инструмента
+  date: 2026-10-31
+  start: "15:00"
+  end: "17:00"
+  free: true
+  platform: Яндекс Телемост
+  case: обезличенная трёхдневная диагностика на стройплощадке (сентябрь 2026)
+
+course:
+  title: ИИ и вайбкодинг для консультанта по операционным преобразованиям
+  sessions: [2026-11-07, 2026-11-14, 2026-11-21, 2026-11-28]
+  start: "15:00"        # null → «время уточняется»
+  end: "17:00"
+  session_hours: 2
+  demo_day: {date: 2026-12-05, start: "15:00", end: "17:00"}
+  format:
+    - онлайн
+    - практические задания между занятиями
+    - библиотека шаблонов и промптов
+    - Telegram-чат курса
+    - записи занятий
+    - итоговый MVP
+  chat_invite_url: null
+  tariffs:
+    - code: early
+      name: Early Bird
+      price_rub: 24900
+      until: 2026-11-02
+      includes:
+        - 4 живых занятия и демо-день
+        - записи занятий
+        - шаблоны и библиотека промптов
+        - Telegram-чат курса
+      payment_url: null
+    - code: standard
+      name: Standard
+      price_rub: 29900
+      includes:
+        - всё из Early Bird
+        - проверка итогового MVP по чек-листу с письменной обратной связью
+      payment_url: null
+    - code: pro
+      name: Pro
+      price_rub: 44900
+      max_seats: 3
+      includes:
+        - всё из Standard
+        - индивидуальный разбор MVP 60–90 минут
+      payment_url: null
