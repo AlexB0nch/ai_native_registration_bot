@@ -5,7 +5,7 @@ Telegram-бот [@AI_native_reg_bot](https://t.me/AI_native_reg_bot): запис
 ответы на вопросы о курсе, приглашения и напоминания, уведомления владельцу.
 
 Правила работы с репозиторием — [CLAUDE.md](CLAUDE.md). Устройство — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-Задачи — [tasks/INDEX.md](tasks/INDEX.md).
+Задачи — [tasks/INDEX.md](tasks/INDEX.md). Эксплуатация (деплой, факты, база знаний, ссылки, выгрузка) — [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Локальный запуск
 
