@@ -66,7 +66,7 @@ course_soon: |-
 
 whoami: "Ваш chat_id: {chat_id}"
 
-# Ответ на текст вне сценария, пока нет TASK-BOT-002 / TASK-LLM-001.
+# Ответ на сообщение без текста и на неизвестную команду или кнопку.
 fallback_text: Выберите действие в меню или нажмите «Задать вопрос».
 
 # Описание бота в Telegram: description ≤ 512 символов, short_description ≤ 120.
@@ -94,6 +94,85 @@ events:
 
 
 # --- admin.*, questions.* — TASK-BOT-002 -------------------------------------------------------
+
+admin:
+  # /stats. Строки списков ({by_day}, {by_source}, …) собирает app/services/stats.py.
+  stats: |-
+    Статистика записей
+
+    Практикум: {practicum_total}{practicum_cancelled}
+    По каналам: {by_channel}
+
+    По дням за последние {days} дней, МСК:
+    {by_day}
+
+    Источники:
+    {by_source}
+
+    Заявки на курс: {course}
+
+    Вопросы без ответа: {unanswered}
+  stats_cancelled: " (и ещё {n} отменили)"
+  stats_course: |-
+    {total}
+    по тарифам: {by_tariff}
+    по статусам: {by_status}
+  stats_course_empty: пока нет
+  stats_other_sources: "другие — {n}"
+  none: нет
+  no_source: без метки
+  no_tariff: без тарифа
+  channels:
+    bot: бот
+    site: сайт
+  statuses:
+    registered: записан
+    applied: заявка
+    confirmed: подтверждена
+    rejected: отклонена
+    paid: оплачена
+    cancelled: отменена
+  # /export
+  export_caption: "Записей: {count}. Время в файле — МСК."
+  # /link, /set_link
+  links: |-
+    Ссылки практикума
+    Трансляция: {join_url}
+    Запись: {recording_url}
+
+    Изменить: /link https://… или /set_link recording https://…
+  link_missing: не задана
+  link_saved: "Ссылка сохранена: {url}"
+  link_bad: "Нужна ссылка, начинающаяся с https://, например: /link https://telemost.yandex.ru/j/…"
+  set_link_usage: |-
+    Формат:
+    /set_link practicum https://… — ссылка на трансляцию практикума;
+    /set_link recording https://… — ссылка на запись практикума.
+
+questions:
+  ask: Напишите вопрос одним сообщением.
+  text_only: Напишите вопрос текстом, одним сообщением.
+  escalated: Передал вопрос Александру, он ответит здесь же.
+  # Владельцу. {details} — «@username, источник» (собирается в коде), {text} — вопрос как есть.
+  to_admin: "Вопрос от {name}{details}:\n{text}"
+  to_admin_bot_answer: "\n\nОтвет бота: {bot_answer}"
+  no_name: без имени
+  no_source: без метки
+  admin_prompt: Напишите ответ для {name}.
+  admin_prompt_again: Напишите ответ для {name}. На этот вопрос вы уже отвечали — новый ответ уйдёт как дополнение.
+  admin_text_only: Ответ отправляется только текстом. Напишите его одним сообщением или нажмите «Отмена».
+  admin_cancelled: Ответ отменён.
+  sent: Отправлено.
+  blocked: "Не доставлено: пользователь заблокировал бота"
+  failed: "Не доставлено: Telegram вернул ошибку, попробуйте ещё раз."
+  no_chat: "Не доставлено: у этого человека нет чата с ботом."
+  not_found: Вопрос не найден.
+  # Пользователю
+  user_answer: "Ответ Александра:\n{text}"
+  user_answer_more: "Дополнение от Александра:\n{text}"
+  buttons:
+    answer: Ответить
+    cancel: Отмена
 
 
 # --- site.* — TASK-API-001 ---------------------------------------------------------------------
