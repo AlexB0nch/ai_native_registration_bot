@@ -14,6 +14,7 @@ from app.bot.keyboards import MENU_COURSE, MENU_MAIN, MENU_PRICES, course_about_
 from app.bot.payload import StartPayload, parse_start_payload
 from app.db import session_scope
 from app.services.people import get_or_create_by_telegram
+from app.services.site_import import bind_site_registration
 from app.texts import t
 
 log = logging.getLogger(__name__)
@@ -52,13 +53,27 @@ async def route_scenario(message: Message, state: FSMContext, payload: StartPayl
     # waitlist (TASK-BOT-005) и menu — только приветствие с меню
 
 
+async def _bind_site(message: Message, event_code: str) -> bool:
+    """Найти заявку с сайта по username отправителя и привязать к этому чату."""
+    if message.from_user is None:
+        return False
+    async with session_scope() as session:
+        return await bind_site_registration(session, message.from_user, event_code)
+
+
 async def handle_site_practicum(message: Message, state: FSMContext, payload: StartPayload) -> None:
-    """`/start prk_web` — привязка заявки с сайта (TASK-API-001). Пока — сценарий практикума."""
+    """`/start prk_web` — привязка заявки с сайта (TASK-API-001); не нашлась — сценарий практикума."""
+    if await _bind_site(message, "practicum"):
+        await message.answer(t("site.found_practicum"))
+        return
     await start_practicum(message, state)
 
 
 async def handle_site_course(message: Message, state: FSMContext, payload: StartPayload) -> None:
-    """`/start crs_web` — привязка заявки с сайта (TASK-API-001). Пока — «запись на курс откроется скоро»."""
+    """`/start crs_web` — привязка заявки с сайта (TASK-API-001); не нашлась — «запись на курс откроется скоро»."""
+    if await _bind_site(message, "course"):
+        await message.answer(t("site.found_course"))
+        return
     await message.answer(t("course_soon"))
 
 
