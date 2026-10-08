@@ -1,0 +1,61 @@
+# Прод: Coolify, ресурс Docker Compose. Домен https://reg.alexshein.com назначается
+# в Coolify сервису `bot` (порт 8000); TLS — Traefik Coolify. Портов наружу нет.
+#
+# Переменные Coolify подставляются в ${VAR} этого файла, но в контейнер попадают
+# только те, что перечислены в `environment:`. env_file не используется (.env на сервере нет).
+# Обязательные — через ${VAR:?...}: без них деплой падает сразу и громко.
+#
+# Проверка: docker compose -f docker-compose.coolify.yml config -q
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN is required}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:?TELEGRAM_WEBHOOK_SECRET is required}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://reg.alexshein.com}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      ADMIN_CHAT_IDS: ${ADMIN_CHAT_IDS:-}
+      PRIVACY_URL: ${PRIVACY_URL:-https://alexshein.com/privacy}
+      SITE_WEBHOOK_SECRET: ${SITE_WEBHOOK_SECRET:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-stub}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      SETUP_BOT_ON_START: ${SETUP_BOT_ON_START:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_native_bot
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bot -d ai_native_bot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
