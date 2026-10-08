@@ -28,9 +28,22 @@ async def answer_question_inline(message: Message, text: str) -> None:
 
     Точка входа для TASK-BOT-002 и TASK-LLM-001; её же вызывает сценарий практикума,
     когда на шаге пришёл вопрос вместо ответа (после неё сценарий повторяет свой шаг).
-    Заглушка: `fallback_text` + меню.
+    TASK-LLM-001: быстрый ответ или модель (`app/llm/service.py`) + кнопка по `cta`;
+    без точного ответа (`handoff`) — вопрос владельцу через `escalate`.
     """
-    await message.answer(t("fallback_text"), reply_markup=main_menu())
+    from app.db import session_scope
+    from app.llm.service import answer_question, cta_keyboard
+    from app.services.people import get_or_create_by_telegram
+
+    answer = await answer_question(text)
+    await message.answer(answer.text, reply_markup=cta_keyboard(answer.cta))
+    if answer.handoff and message.from_user is not None:
+        try:
+            async with session_scope() as session:
+                person = await get_or_create_by_telegram(session, message.from_user, None)
+            await escalate(message, person, text, bot_answer=answer.text if answer.answered else None)
+        except Exception:
+            log.exception("escalate: не удалось передать вопрос владельцу")
 
 
 async def escalate(message: Message, person: Any, text: str, bot_answer: str | None = None) -> None:
