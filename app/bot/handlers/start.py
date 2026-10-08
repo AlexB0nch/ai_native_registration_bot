@@ -10,7 +10,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from app.bot.handlers.practicum import START_SOURCE_KEY, start_practicum
-from app.bot.keyboards import MENU_COURSE, MENU_MAIN, MENU_PRICES, course_about_kb, main_menu, prices_kb
+from app.bot.keyboards import (
+    MENU_COURSE,
+    MENU_MAIN,
+    MENU_PRICES,
+    course_about_kb,
+    main_menu,
+    practicum_done_kb,
+    prices_kb,
+)
 from app.bot.payload import StartPayload, parse_start_payload
 from app.db import session_scope
 from app.services.people import get_or_create_by_telegram
@@ -64,7 +72,7 @@ async def _bind_site(message: Message, event_code: str) -> bool:
 async def handle_site_practicum(message: Message, state: FSMContext, payload: StartPayload) -> None:
     """`/start prk_web` — привязка заявки с сайта (TASK-API-001); не нашлась — сценарий практикума."""
     if await _bind_site(message, "practicum"):
-        await message.answer(t("site.found_practicum"))
+        await message.answer(t("site.found_practicum"), reply_markup=practicum_done_kb())
         return
     await start_practicum(message, state)
 

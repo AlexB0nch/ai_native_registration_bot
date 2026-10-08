@@ -55,6 +55,7 @@ async def test_prk_web_binds_site_application(tg: TgHarness, db: AsyncSession) -
     assert texts[0].startswith("Здравствуйте!")
     assert texts[-1].startswith("Нашёл вашу заявку с сайта на практикум 31 октября, суббота, 15:00–17:00 МСК")
     assert "за день до начала пришлю сюда ссылку" in texts[-1]
+    assert "Добавить в календарь" in str(tg.session.last_message(USER_ID))
     assert_no_admin_messages(tg)
 
     [person] = await people(db)

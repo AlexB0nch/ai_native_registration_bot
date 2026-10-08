@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 ALLOWED_UPDATES = ["message", "callback_query"]
 PUBLIC_COMMANDS = ("start", "practicum", "course", "question")
-ADMIN_COMMANDS = ("stats", "export", "link", "whoami")
+ADMIN_COMMANDS = ("stats", "export", "link", "set_link", "whoami")
 
 
 def build_bot(token: str | None = None, session: BaseSession | None = None) -> Bot:
