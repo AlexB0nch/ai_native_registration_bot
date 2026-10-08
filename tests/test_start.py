@@ -158,5 +158,5 @@ async def test_click_button_by_label(tg: TgHarness) -> None:
     await tg.send("/start")
     await tg.click_button("Цены и формат")
     assert tg.session.last_text(USER_ID).startswith("Тарифы курса")
-    await tg.click_button("Записаться на практикум")  # пока обрабатывает заглушка questions
-    assert tg.session.last_text(USER_ID).startswith("Выберите действие")
+    await tg.click_button("Записаться на практикум")
+    assert tg.session.last_text(USER_ID).startswith("Как к вам обращаться?")
