@@ -127,7 +127,7 @@ async def test_main_menu_button_clears_state(tg: TgHarness) -> None:
 
 
 async def test_free_text_and_unknown_button_get_fallback(tg: TgHarness) -> None:
-    await tg.send("Сколько стоит курс?")
+    await tg.send("/unknown")  # свободный текст теперь отвечает TASK-LLM-001 (tests/test_llm_service.py)
     assert tg.session.last_text(USER_ID) == "Выберите действие в меню или нажмите «Задать вопрос»."
     tg.session.clear()
     await tg.click("unknown:button")
