@@ -191,6 +191,8 @@ def test_texts_tone() -> None:
 
 def test_all_texts_render() -> None:
     kwargs = {"chat_id": 1, "n": 1}
+    # подстановки сценария практикума (TASK-BOT-001)
+    kwargs |= {"name": "x", "email": "x", "phone": "x", "username": "x", "source": "x", "count": 1, "title": "x"}
     for key, value in _walk(get_texts()):
         if isinstance(value, str):
             rendered = t(key, **kwargs)

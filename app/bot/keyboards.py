@@ -63,5 +63,96 @@ def back_to_menu_kb() -> InlineKeyboardMarkup:
 
 # --- TASK-BOT-001: клавиатуры сценария практикума ---------------------------------------------
 
+# Импорт здесь, а не в шапке: разделы модуля правят параллельные задачи, так меньше конфликтов.
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup  # noqa: E402
+
+PRK_NAME_KEEP = "prk:name_keep"
+PRK_EMAIL_KEEP = "prk:email_keep"
+PRK_BACK = "prk:back"
+PRK_CANCEL = "prk:cancel"
+PRK_AGREE = "prk:agree"
+PRK_EDIT = "prk:edit"
+PRK_ICS = "prk:ics"
+PRK_ROLE_PREFIX = "prk:role:"
+PRK_ROLE_SKIP = "skip"
+PRK_ROLE_CODES = ("consultant", "opex", "transformation", "other")
+
+
+def _practicum_nav_row(back: bool = True) -> list[InlineKeyboardButton]:
+    row = [_button("practicum.buttons.back", PRK_BACK)] if back else []
+    return [*row, _button("practicum.buttons.cancel", PRK_CANCEL)]
+
+
+def practicum_name_kb(known_name: str | None) -> InlineKeyboardMarkup:
+    """Шаг 1: «Да, {имя}» (если имя известно) и «Отмена» — предыдущего шага нет."""
+    rows: list[list[InlineKeyboardButton]] = []
+    if known_name:
+        rows.append(
+            [InlineKeyboardButton(text=t("practicum.buttons.name_yes", name=known_name), callback_data=PRK_NAME_KEEP)]
+        )
+    rows.append(_practicum_nav_row(back=False))
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def practicum_email_kb(saved_email: str | None) -> InlineKeyboardMarkup:
+    """Шаг 2: «Оставить {почта}» (если почта уже введена), «Назад», «Отмена»."""
+    rows: list[list[InlineKeyboardButton]] = []
+    if saved_email:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=t("practicum.buttons.email_keep", email=saved_email), callback_data=PRK_EMAIL_KEEP
+                )
+            ]
+        )
+    rows.append(_practicum_nav_row())
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def practicum_phone_reply_kb(saved_phone: str | None) -> ReplyKeyboardMarkup:
+    """Шаг 3 (reply-клавиатура): «Поделиться контактом», сохранённый номер, «Пропустить»."""
+    rows = [[KeyboardButton(text=t("practicum.buttons.share_contact"), request_contact=True)]]
+    if saved_phone:
+        rows.append([KeyboardButton(text=saved_phone)])
+    rows.append([KeyboardButton(text=t("practicum.buttons.skip"))])
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True, one_time_keyboard=True)
+
+
+def practicum_nav_kb() -> InlineKeyboardMarkup:
+    """«Назад» и «Отмена» — для шага телефона (его reply-клавиатура не может нести inline-кнопки)."""
+    return InlineKeyboardMarkup(inline_keyboard=[_practicum_nav_row()])
+
+
+def practicum_consent_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[_button("practicum.buttons.agree", PRK_AGREE)], _practicum_nav_row()]
+    )
+
+
+def practicum_done_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [_button("practicum.buttons.calendar", PRK_ICS)],
+            [_button("menu.course", MENU_COURSE)],
+            [_button("menu.prices", MENU_PRICES)],
+        ]
+    )
+
+
+def practicum_already_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [_button("practicum.buttons.edit", PRK_EDIT)],
+            [_button("practicum.buttons.calendar", PRK_ICS)],
+            [_button("buttons.menu", MENU_MAIN)],
+        ]
+    )
+
+
+def practicum_role_kb() -> InlineKeyboardMarkup:
+    rows = [[_button(f"practicum.roles.{code}", PRK_ROLE_PREFIX + code)] for code in PRK_ROLE_CODES]
+    rows.append([_button("practicum.roles.skip", PRK_ROLE_PREFIX + PRK_ROLE_SKIP)])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 # --- TASK-BOT-002: клавиатуры владельца и вопросов --------------------------------------------

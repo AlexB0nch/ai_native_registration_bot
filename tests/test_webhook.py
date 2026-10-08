@@ -51,7 +51,7 @@ async def test_webhook_with_secret_processes_update(client: httpx.AsyncClient, t
     update = make_message_update("/start lp_opex_p1", username="Irina_Ops")
     response = await client.post("/tg/webhook", json=update_json(update), headers=webhook_headers())
     assert response.status_code == 200
-    assert tg.session.last_text(USER_ID).startswith("Здравствуйте!")
+    assert tg.session.sent_texts(USER_ID)[0].startswith("Здравствуйте!")
 
 
 async def test_webhook_returns_200_on_handler_error(client: httpx.AsyncClient, tg: TgHarness, monkeypatch) -> None:
