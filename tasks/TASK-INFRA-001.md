@@ -3,7 +3,7 @@
 | Поле | Значение |
 |---|---|
 | **TASK-ID** | TASK-INFRA-001 |
-| **Status** | Ready |
+| **Status** | In Review |
 | **Owner (Implementer)** | Claude-in-worktree |
 | **Created** | 2026-10-08 |
 | **Updated** | 2026-10-08 |
