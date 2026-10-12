@@ -17,6 +17,12 @@ links:
   gift_bot: https://t.me/Alex_shein_gift_bot
   gift_after_practicum: https://t.me/Alex_shein_gift_bot?start=after_prk
 
+# Подарок за регистрацию (TASK-BOT-006): после записи бот просит отправить эту фразу боту
+# подарков (links.gift_bot). Фраза живёт только здесь: в промпт модели она не попадает,
+# а ответ модели с ней отклоняется (app/llm/guard.py).
+gift:
+  registration_phrase: "25_задач"
+
 practicum:
   title: Как консультанту за 90 минут превратить материалы диагностики в управленческую историю и прототип клиентского инструмента
   date: 2026-10-31

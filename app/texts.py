@@ -22,6 +22,7 @@ from app.facts import (
     format_slot,
     format_time_range,
     get_facts,
+    telegram_username,
 )
 
 DEFAULT_TEXTS_PATH = Path(__file__).resolve().parent.parent / "config" / "texts.yaml"
@@ -91,6 +92,8 @@ def fact_placeholders() -> dict[str, str]:
         "course_page": facts.links.course_page,
         "gift_bot": facts.links.gift_bot,
         "gift_after_practicum": facts.links.gift_after_practicum,
+        "gift_bot_username": telegram_username(facts.links.gift_bot),
+        "gift_phrase": facts.gift.registration_phrase,
         "privacy_url": get_settings().privacy_url,
     }
     for tariff in course.tariffs:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.facts import get_facts, set_facts
-from app.llm.guard import MAX_LEN, check, truncate
+from app.llm.guard import MAX_LEN, check, secret_phrase_re, truncate
 
 NBSP = " "
 NNBSP = " "
@@ -94,3 +94,53 @@ def test_truncate_without_sentences() -> None:
     assert len(out) <= MAX_LEN
     assert out.endswith("…")
     assert truncate("коротко") == "коротко"
+
+
+# --- TASK-BOT-006: секретная фраза подарка ---------------------------------------------------
+
+
+def _phrase() -> str:
+    return get_facts().gift.registration_phrase
+
+
+@pytest.mark.parametrize(
+    "variant",
+    [
+        lambda p: p,
+        lambda p: p.replace("_", " "),
+        lambda p: p.replace("_", "-"),
+        lambda p: p.replace("_", "—"),
+        lambda p: p.replace("_", ""),
+        lambda p: p.upper(),
+        lambda p: p.replace("_", " ").title(),
+        lambda p: p.replace("_", NBSP),
+    ],
+)
+def test_gift_phrase_rejected(variant) -> None:
+    phrase = variant(_phrase())
+    result = check(f"Отправьте боту @Alex_shein_gift_bot фразу «{phrase}», и он пришлёт подарок.")
+    assert not result.ok
+    assert "secret:gift" in result.reasons
+    # в причинах (они пишутся в лог) самой фразы нет
+    assert all(_phrase().lower() not in reason.lower() for reason in result.reasons)
+
+
+def test_gift_bot_without_phrase_passes() -> None:
+    result = check("Подарок пришлёт этот бот после записи на практикум. Бот подарков: https://t.me/Alex_shein_gift_bot")
+    assert result.ok, result.reasons
+
+
+def test_gift_phrase_follows_facts() -> None:
+    old = _phrase()
+    facts = get_facts().model_copy(deep=True)
+    facts.gift.registration_phrase = "новая_фраза"
+    set_facts(facts)
+    assert not check("Напишите «Новая фраза».").ok
+    assert check(f"Напишите «{old}».").ok
+
+
+def test_secret_phrase_re_needs_word_start() -> None:
+    pattern = secret_phrase_re("ab_cd")
+    assert pattern.search("ab cd")
+    assert pattern.search("«AB-CD»")
+    assert not pattern.search("xab cd")

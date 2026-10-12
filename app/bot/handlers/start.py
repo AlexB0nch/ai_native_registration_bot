@@ -9,7 +9,7 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from app.bot.handlers.practicum import START_SOURCE_KEY, start_practicum
+from app.bot.handlers.practicum import START_SOURCE_KEY, send_registration_gift, start_practicum
 from app.bot.keyboards import (
     MENU_COURSE,
     MENU_MAIN,
@@ -73,6 +73,7 @@ async def handle_site_practicum(message: Message, state: FSMContext, payload: St
     """`/start prk_web` — привязка заявки с сайта (TASK-API-001); не нашлась — сценарий практикума."""
     if await _bind_site(message, "practicum"):
         await message.answer(t("site.found_practicum"), reply_markup=practicum_done_kb())
+        await send_registration_gift(message)
         return
     await start_practicum(message, state)
 
@@ -80,7 +81,7 @@ async def handle_site_practicum(message: Message, state: FSMContext, payload: St
 async def handle_site_course(message: Message, state: FSMContext, payload: StartPayload) -> None:
     """`/start crs_web` — привязка заявки с сайта (TASK-API-001); не нашлась — «запись на курс откроется скоро»."""
     if await _bind_site(message, "course"):
-        await message.answer(t("site.found_course"))
+        await message.answer(t("site.found_course"))  # подарок — только за практикум (TASK-BOT-006)
         return
     await message.answer(t("course_soon"))
 

@@ -4,8 +4,9 @@
 практикума (`start.py` вызывает `start_practicum`).
 
 Шаги: имя → почта → телефон (можно пропустить) → согласие → запись и уведомление владельцу,
-затем необязательный вопрос о роли. Введённое хранится в FSM data до конца сценария;
-в `people` и `registrations` всё пишется одной транзакцией после «Согласен».
+затем подарок за регистрацию (TASK-BOT-006) и необязательный вопрос о роли.
+Введённое хранится в FSM data до конца сценария; в `people` и `registrations` всё пишется
+одной транзакцией после «Согласен».
 В логи — только внутренние id.
 """
 
@@ -125,11 +126,20 @@ async def _begin(target: AnswerTarget, state: FSMContext, tg_user: User | None, 
         if await _current_step(state) is not None:
             await state.set_state(None)
         await target.answer(t("practicum.already"), reply_markup=kb.practicum_already_kb())
+        await send_registration_gift(target)
         return
 
     log.info("practicum: flow started person=%s edit=%s", person_id, edit)
     await state.update_data({**prefill, EDIT_KEY: edit})
     await _ask(target, state, PracticumForm.name)
+
+
+async def send_registration_gift(target: AnswerTarget) -> None:
+    """Подарок за регистрацию (TASK-BOT-006): фраза для бота подарков и кнопка-ссылка на него.
+
+    Без parse_mode: фраза уходит простым текстом, подчёркивание в ней не разметка.
+    """
+    await target.answer(t("practicum.gift"), reply_markup=kb.gift_kb())
 
 
 @router.message(Command("practicum"))
@@ -337,6 +347,7 @@ async def on_agree(callback: CallbackQuery, state: FSMContext) -> None:
         await _ask(target, state, PracticumForm.email)
         return
     phone = data.get(PHONE_KEY)
+    edit = bool(data.get(EDIT_KEY))
 
     async with session_scope() as session:
         person = await get_or_create_by_telegram(session, callback.from_user, data.get(START_SOURCE_KEY))
@@ -356,6 +367,9 @@ async def on_agree(callback: CallbackQuery, state: FSMContext) -> None:
     log.info("practicum: registration saved person=%s created=%s", person_id, created)
 
     await target.answer(t("practicum.done", name=name), reply_markup=kb.practicum_done_kb())
+    # «Изменить данные» без новой записи — подарок уже выдан при записи, не дублируем.
+    if created or not edit:
+        await send_registration_gift(target)
     if created:
         await notify_admins(
             callback.bot,

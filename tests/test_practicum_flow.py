@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+from aiogram.client.default import Default
 from aiogram.fsm.storage.base import StorageKey
 from aiogram.methods import SendDocument
 from aiogram.types import BufferedInputFile, Message, User
@@ -13,6 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bot import keyboards
 from app.bot.handlers import practicum as practicum_handlers
 from app.bot.handlers.practicum import PracticumForm
+from app.bot.setup import build_bot
+from app.facts import get_facts, set_facts
 from app.models import Person, Registration
 from app.services.people import get_or_create_by_telegram
 from app.services.registrations import count_registrations, register_for_event
@@ -20,10 +23,12 @@ from app.texts import t
 from tests.helpers import (
     ADMIN_ID,
     BOT_ID,
+    BOT_TOKEN,
     OTHER_USER_ID,
     USER_ID,
     TgHarness,
     button_texts,
+    inline_buttons,
     make_user,
 )
 
@@ -66,6 +71,40 @@ async def _registrations(db: AsyncSession) -> list[Registration]:
 
 def _admin_texts(tg: TgHarness) -> list[str]:
     return tg.session.sent_texts(ADMIN_ID)
+
+
+# --- подарок за регистрацию (TASK-BOT-006) --------------------------------------------------
+
+GIFT_BOT = "@Alex_shein_gift_bot"
+GIFT_BOT_URL = "https://t.me/Alex_shein_gift_bot"
+
+
+def gift_phrase() -> str:
+    """Фраза — только из фактов, в тестах литералом не пишется."""
+    return get_facts().gift.registration_phrase
+
+
+def assert_plain_text(payload: dict) -> None:
+    """Сообщение уходит без parse_mode: «_» во фразе не превращается в разметку и не ломает её."""
+    parse_mode = payload.get("parse_mode")
+    if isinstance(parse_mode, Default):  # значение по умолчанию бота из app/bot/setup.py
+        parse_mode = build_bot(BOT_TOKEN).default[parse_mode.name]
+    assert parse_mode is None
+    assert not payload.get("entities")
+
+
+def assert_gift_message(payload: dict) -> None:
+    text = payload["text"]
+    assert text == (
+        f"Подарок за регистрацию: откройте {GIFT_BOT} и отправьте ему секретную фразу «{gift_phrase()}» — "
+        "бот пришлёт материалы."
+    )
+    assert inline_buttons(payload) == [{"text": "Забрать подарок", "url": GIFT_BOT_URL}]
+    assert_plain_text(payload)
+
+
+def gift_messages(tg: TgHarness, user_id: int = USER_ID) -> list[dict]:
+    return [m for m in tg.session.sent_messages(user_id) if gift_phrase() in m.get("text", "")]
 
 
 async def _register(tg: TgHarness, user_id: int = USER_ID, email: str = "Irina@Example.COM") -> None:
@@ -127,7 +166,9 @@ async def test_full_flow_from_landing_label(tg: TgHarness, db: AsyncSession) -> 
     assert person.consent_at is not None
     assert person.source == "lp_opex_p1"
 
-    done, role_question = tg.session.sent_messages(USER_ID)[-2:]
+    done, gift, role_question = tg.session.sent_messages(USER_ID)[-3:]
+    assert_gift_message(gift)
+    assert len(gift_messages(tg)) == 1
     assert done["text"] == (
         f"Готово, Ирина! Вы записаны на практикум {SLOT}, Яндекс Телемост.\n"
         "За день до начала пришлю ссылку на подключение, за час — напоминание."
@@ -201,18 +242,23 @@ async def test_second_pass_does_not_duplicate(tg: TgHarness, db: AsyncSession) -
     created_at = first.created_at
     assert len(_admin_texts(tg)) == 1
 
-    # повторный вход — «вы уже записаны»
+    assert len(gift_messages(tg)) == 1
+
+    # повторный вход — «вы уже записаны» и напоминание о подарке
     await tg.send("/start prk_tg2")
-    already = tg.session.last_message(USER_ID)
+    already, gift = tg.session.sent_messages(USER_ID)[-2:]
     assert already["text"] == f"Вы уже записаны на практикум {SLOT}. Ссылку пришлю за день до начала."
     assert button_texts(already) == ["Изменить данные", "Добавить в календарь", "В меню"]
+    assert_gift_message(gift)
     assert await _state(tg) is None
 
     await tg.click(keyboards.MENU_PRACTICUM)
-    assert tg.session.last_text(USER_ID).startswith("Вы уже записаны")
+    assert tg.session.sent_texts(USER_ID)[-2].startswith("Вы уже записаны")
+    assert_gift_message(tg.session.last_message(USER_ID))
+    gifts_before_edit = len(gift_messages(tg))
 
     # «Изменить данные» — те же шаги, та же запись
-    await tg.click_button("Изменить данные")
+    await tg.click(keyboards.PRK_EDIT)  # кнопка — под «Вы уже записаны», последнее сообщение — подарок
     assert tg.session.last_text(USER_ID).startswith("Как к вам обращаться? Нажмите «Да, Ирина»")
     await tg.send("Ира")
     assert button_texts(tg.session.last_message(USER_ID)) == ["Оставить irina@example.com", "Назад", "Отмена"]
@@ -229,6 +275,8 @@ async def test_second_pass_does_not_duplicate(tg: TgHarness, db: AsyncSession) -
     assert (person.name, person.email, person.phone) == ("Ира", "irina@example.com", "+79123456789")
     assert len(_admin_texts(tg)) == 1
     assert tg.session.sent_texts(USER_ID)[-2].startswith("Готово, Ира!")
+    # «Изменить данные» без новой записи — подарок не дублируется
+    assert len(gift_messages(tg)) == gifts_before_edit
 
 
 async def test_two_people_counted(tg: TgHarness, db: AsyncSession) -> None:
@@ -468,3 +516,40 @@ def test_practicum_texts_use_facts() -> None:
     assert t("practicum.done", name="Ирина").startswith(f"Готово, Ирина! Вы записаны на практикум {SLOT}")
     assert t("practicum.already") == f"Вы уже записаны на практикум {SLOT}. Ссылку пришлю за день до начала."
     assert t("practicum.buttons.name_yes", name="Ирина") == "Да, Ирина"
+
+
+# --- TASK-BOT-006: подарок за регистрацию ----------------------------------------------------
+
+
+async def test_gift_after_registration_by_command(tg: TgHarness) -> None:
+    await tg.send("/practicum")
+    await tg.click_button("Да, ")
+    await tg.send("irina@example.com")
+    await tg.send("Пропустить")
+    await tg.click_button("Согласен")
+    texts = tg.session.sent_texts(USER_ID)
+    done_index = next(i for i, text in enumerate(texts) if text.startswith("Готово"))
+    assert gift_phrase() in texts[done_index + 1]  # сразу после «Готово», до вопроса о роли
+    assert texts[done_index + 2] == "Необязательный вопрос: чем вы занимаетесь?"
+    [gift] = gift_messages(tg)
+    assert_gift_message(gift)
+
+
+def test_gift_text_follows_facts() -> None:
+    facts = get_facts().model_copy(deep=True)
+    facts.gift.registration_phrase = "новая_фраза"
+    set_facts(facts)
+    text = t("practicum.gift")
+    assert "«новая_фраза»" in text
+    assert GIFT_BOT in text
+
+
+def test_gift_phrase_only_in_facts() -> None:
+    """Фраза не пишется литералом в texts.yaml; быстрые ответы faq.* её не содержат."""
+    from app.llm.guard import secret_phrase_re
+    from app.texts import get_texts
+
+    phrase = secret_phrase_re(gift_phrase())
+    assert not phrase.search(str(get_texts()))
+    for key in get_texts()["faq"]:
+        assert not phrase.search(t(f"faq.{key}")), key

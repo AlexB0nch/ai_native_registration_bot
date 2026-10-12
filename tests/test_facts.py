@@ -254,6 +254,7 @@ def test_placeholders_cover_spec() -> None:
         "early_until": "2 ноября включительно",
         "course_page": "https://alexshein.com/ai-native",
         "author_name": "Александр Шеин",
+        "gift_bot_username": "@Alex_shein_gift_bot",
     }
     for key, value in expected.items():
         assert values[key] == value, key
@@ -266,3 +267,53 @@ def test_course_time_unknown() -> None:
     facts.course.start = None
     set_facts(facts)
     assert fact_placeholders()["course_time"] == "время уточняется"
+
+
+# --- TASK-BOT-006: подарок за регистрацию ----------------------------------------------------
+
+
+def test_gift_facts_and_placeholders() -> None:
+    facts = get_facts()
+    phrase = facts.gift.registration_phrase
+    assert phrase and phrase == phrase.strip()
+    assert facts.links.gift_bot == "https://t.me/Alex_shein_gift_bot"
+    values = fact_placeholders()
+    assert values["gift_phrase"] == phrase
+    assert values["gift_bot_username"] == "@Alex_shein_gift_bot"
+
+
+def test_gift_phrase_change_changes_placeholder() -> None:
+    facts = get_facts().model_copy(deep=True)
+    facts.gift.registration_phrase = "другая_фраза"
+    set_facts(facts)
+    assert fact_placeholders()["gift_phrase"] == "другая_фраза"
+    assert "«другая_фраза»" in t("practicum.gift")
+
+
+def test_telegram_username() -> None:
+    assert facts_mod.telegram_username("https://t.me/Alex_shein_gift_bot") == "@Alex_shein_gift_bot"
+    assert facts_mod.telegram_username("https://t.me/Alex_shein_gift_bot?start=after_prk") == "@Alex_shein_gift_bot"
+    with pytest.raises(ValueError):
+        facts_mod.telegram_username("https://example.com/bot")
+
+
+@pytest.mark.parametrize("phrase", ["", "   "])
+def test_blank_gift_phrase_rejected(phrase: str) -> None:
+    raw = _raw_facts()
+    raw["gift"]["registration_phrase"] = phrase
+    with pytest.raises(FactsError, match=r"gift\.registration_phrase"):
+        load_facts(raw)
+
+
+def test_missing_gift_block_rejected() -> None:
+    raw = _raw_facts()
+    del raw["gift"]
+    with pytest.raises(FactsError, match=r"gift"):
+        load_facts(raw)
+
+
+def test_gift_bot_must_be_telegram_link() -> None:
+    raw = _raw_facts()
+    raw["links"]["gift_bot"] = "https://example.com/gift"
+    with pytest.raises(FactsError, match=r"links\.gift_bot"):
+        load_facts(raw)

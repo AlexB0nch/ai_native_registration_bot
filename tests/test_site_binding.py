@@ -12,7 +12,8 @@ from app.models import Delivery, Event, Person, Question, Registration
 from app.services.events import sync_events_from_facts
 from app.services.people import merge_people
 from app.services.site_import import SiteRegistrationIn, import_site_registration
-from tests.helpers import ADMIN_ID, USER_ID, TgHarness
+from tests.helpers import ADMIN_ID, USER_ID, TgHarness, button_texts
+from tests.test_practicum_flow import assert_gift_message, gift_messages
 from tests.test_site_api import COURSE, EXAMPLE
 
 
@@ -53,9 +54,12 @@ async def test_prk_web_binds_site_application(tg: TgHarness, db: AsyncSession) -
 
     texts = tg.session.sent_texts(USER_ID)
     assert texts[0].startswith("Здравствуйте!")
-    assert texts[-1].startswith("Нашёл вашу заявку с сайта на практикум 31 октября, суббота, 15:00–17:00 МСК")
-    assert "за день до начала пришлю сюда ссылку" in texts[-1]
-    assert "Добавить в календарь" in str(tg.session.last_message(USER_ID))
+    found, gift = tg.session.sent_messages(USER_ID)[-2:]
+    assert found["text"].startswith("Нашёл вашу заявку с сайта на практикум 31 октября, суббота, 15:00–17:00 МСК")
+    assert "за день до начала пришлю сюда ссылку" in found["text"]
+    assert "Добавить в календарь" in button_texts(found)
+    # TASK-BOT-006: подарок за регистрацию на практикум — отдельным сообщением после «нашёл»
+    assert_gift_message(gift)
     assert_no_admin_messages(tg)
 
     [person] = await people(db)
@@ -68,7 +72,8 @@ async def test_prk_web_binds_site_application(tg: TgHarness, db: AsyncSession) -
 
     # Повторный /start prk_web: заявка уже у этого человека — снова «нашёл», без дублей.
     await tg.send("/start prk_web", username="Irina_Ops")
-    assert tg.session.last_text(USER_ID).startswith("Нашёл вашу заявку")
+    assert tg.session.sent_texts(USER_ID)[-2].startswith("Нашёл вашу заявку")
+    assert_gift_message(tg.session.last_message(USER_ID))
     assert len(await people(db)) == 1
     assert len(await regs(db)) == 1
 
@@ -92,7 +97,8 @@ async def test_prk_web_merges_with_existing_bot_person(tg: TgHarness, db: AsyncS
 
     await tg.send("/start prk_web", username="Irina_Ops")
 
-    assert tg.session.last_text(USER_ID).startswith("Нашёл вашу заявку с сайта на практикум")
+    assert tg.session.sent_texts(USER_ID)[-2].startswith("Нашёл вашу заявку с сайта на практикум")
+    assert_gift_message(tg.session.last_message(USER_ID))
     assert_no_admin_messages(tg)
     [person] = await people(db)
     assert person.id == bot_person.id
@@ -123,6 +129,8 @@ async def test_crs_web_binds_course_application(tg: TgHarness, db: AsyncSession)
     await tg.send("/start crs_web", username="irina_ops")
 
     assert tg.session.last_text(USER_ID).startswith("Нашёл вашу заявку с сайта на курс «")
+    # TASK-BOT-006: подарок — только за регистрацию на практикум, за заявку на курс его нет
+    assert gift_messages(tg) == []
     [person] = await people(db)
     assert person.telegram_id == USER_ID
 

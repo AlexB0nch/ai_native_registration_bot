@@ -42,6 +42,8 @@ MONTHS_GENITIVE = (
 WEEKDAYS = ("понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье")
 
 _HHMM = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+# Ссылка на бота или пользователя Telegram: https://t.me/<username>[?start=…]
+_TG_LINK = re.compile(r"^https://t\.me/(?P<username>[A-Za-z][A-Za-z0-9_]{3,31})/?(?:\?.*)?$")
 
 
 class FactsError(ValueError):
@@ -76,6 +78,26 @@ class Links(_Model):
     course_page: str
     gift_bot: str
     gift_after_practicum: str
+
+    @field_validator("gift_bot")
+    @classmethod
+    def _telegram_link(cls, value: str) -> str:
+        if not _TG_LINK.match(value.strip()):
+            raise ValueError(f"нужна ссылка вида https://t.me/<username>, получено {value!r}")
+        return value.strip()
+
+
+class Gift(_Model):
+    """Подарок за регистрацию: секретная фраза для бота подарков (`links.gift_bot`)."""
+
+    registration_phrase: str
+
+    @field_validator("registration_phrase")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("фраза не может быть пустой")
+        return value.strip()
 
 
 class Practicum(_Model):
@@ -133,6 +155,7 @@ class Facts(_Model):
     timezone: str = "Europe/Moscow"
     author: Author
     links: Links
+    gift: Gift
     practicum: Practicum
     course: Course
 
@@ -274,6 +297,14 @@ def format_dates_list(days: Iterable[date]) -> str:
 def format_price(rub: int) -> str:
     """«24 900 ₽» с неразрывными пробелами."""
     return f"{rub:,}".replace(",", NBSP) + f"{NBSP}₽"
+
+
+def telegram_username(url: str) -> str:
+    """`https://t.me/Alex_shein_gift_bot` → `@Alex_shein_gift_bot`."""
+    match = _TG_LINK.match(url.strip())
+    if match is None:
+        raise ValueError(f"не ссылка на Telegram: {url!r}")
+    return "@" + match.group("username")
 
 
 # --- тарифы и проверки ------------------------------------------------------------------------

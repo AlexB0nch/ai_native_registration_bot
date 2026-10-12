@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 from app.facts import MONTHS_GENITIVE, NBSP, get_facts, set_facts
+from app.llm.guard import secret_phrase_re
 from app.llm.prompt import (
     FACTS_HEADER,
     KNOWLEDGE_HEADER,
@@ -107,3 +108,11 @@ def test_user_message_is_json_and_limited() -> None:
     assert json.loads(message) == {"вопрос_пользователя": "Сколько длится курс?"}
     long = json.loads(build_user_message("а" * 5000))["вопрос_пользователя"]
     assert len(long) == 2000
+
+
+def test_gift_phrase_not_in_prompt() -> None:
+    """TASK-BOT-006: секретную фразу подарка модель не знает — её выдаёт только сценарий записи."""
+    phrase = get_facts().gift.registration_phrase
+    prompt = build_system_prompt()
+    assert not secret_phrase_re(phrase).search(prompt)
+    assert get_facts().links.gift_bot in facts_block()

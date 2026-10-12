@@ -9,6 +9,7 @@
 #   {price_early} {price_standard} {price_pro} {early_until} {pro_max_seats}
 #   {early_name} {standard_name} {pro_name} {early_includes} {standard_includes} {pro_includes}
 #   {course_page} {gift_bot} {gift_after_practicum} {privacy_url}
+#   {gift_bot_username} {gift_phrase} — только в practicum.gift (фразу не пишем в faq.* и другие тексты)
 # Остальные {поля} передаются в t(key, поле=...). Буквальные фигурные скобки — {{ и }}.
 # Ключи — путь через точку: t("menu.practicum").
 
@@ -113,6 +114,10 @@ practicum:
     Готово, {name}! Вы записаны на практикум {practicum_slot}, {platform}.
     За день до начала пришлю ссылку на подключение, за час — напоминание.
   already: Вы уже записаны на практикум {practicum_slot}. Ссылку пришлю за день до начала.
+  # TASK-BOT-006: отдельным сообщением после записи, «Вы уже записаны» и найденной заявки с сайта.
+  # Сообщения уходят без parse_mode (простой текст): подчёркивание во фразе не ломает разметку.
+  gift: |-
+    Подарок за регистрацию: откройте {gift_bot_username} и отправьте ему секретную фразу «{gift_phrase}» — бот пришлёт материалы.
   cancelled: Запись отменена, данные не сохранены. Записаться можно в любой момент из меню.
   edit_cancelled: Изменения не сохранены. Вы по-прежнему записаны на практикум {practicum_date_short}.
   ask_role: "Необязательный вопрос: чем вы занимаетесь?"
@@ -129,6 +134,7 @@ practicum:
     agree: Согласен
     edit: Изменить данные
     calendar: Добавить в календарь
+    gift: Забрать подарок
   roles:
     consultant: Независимый консультант
     opex: Lean/OpEx в компании

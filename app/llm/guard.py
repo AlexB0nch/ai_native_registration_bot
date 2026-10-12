@@ -6,6 +6,8 @@
 - каждое время «ЧЧ:ММ» — из фактов (начало и конец практикума, занятий, демо-дня);
 - каждая ссылка — из фактов;
 - нет запрещённых слов (тон из CLAUDE.md);
+- нет секретной фразы подарка `gift.registration_phrase` (TASK-BOT-006): без учёта регистра,
+  `_`, пробел и дефис взаимозаменяемы — иначе фразу получит любой, кто спросит, не записываясь;
 - длина ≤ 600 знаков: длиннее — обрезается по предложению, `ok` от этого не меняется.
 
 Причины (`reasons`) — короткие коды без текста вопроса: их можно писать в лог.
@@ -133,6 +135,22 @@ def _check_words(text: str) -> list[str]:
     return [f"word:{word}" for word in FORBIDDEN if word in low]
 
 
+# Разделители между словами секретной фразы: «_», пробелы, дефисы и тире — взаимозаменяемы.
+_PHRASE_GAP = r"[\s_\-‐‑‒–—]"
+
+
+def secret_phrase_re(phrase: str) -> re.Pattern[str]:
+    """`25_задач` → шаблон, который ловит «25_задач», «25 задач», «25-ЗАДАЧ», «25задач»."""
+    words = [re.escape(word) for word in re.split(_PHRASE_GAP + "+", phrase.strip()) if word]
+    return re.compile(r"(?<!\w)" + (_PHRASE_GAP + "*").join(words), re.IGNORECASE)
+
+
+def _check_secrets(text: str) -> list[str]:
+    # В причине — только код, без самой фразы: причины пишутся в лог.
+    phrase = get_facts().gift.registration_phrase
+    return ["secret:gift"] if secret_phrase_re(phrase).search(text) else []
+
+
 def truncate(text: str, limit: int = MAX_LEN) -> str:
     """Обрезать по последнему целому предложению; без предложений — по слову с «…»."""
     text = text.strip()
@@ -156,4 +174,5 @@ def check(text: str) -> GuardResult:
     reasons += _check_times(text)
     reasons += _check_urls(text)
     reasons += _check_words(text)
+    reasons += _check_secrets(text)
     return GuardResult(ok=not reasons, reasons=reasons, text=truncate(text))

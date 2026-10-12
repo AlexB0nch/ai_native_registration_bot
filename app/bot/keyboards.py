@@ -183,3 +183,12 @@ def answer_cancel_kb() -> InlineKeyboardMarkup:
 def owner_answer_kb() -> InlineKeyboardMarkup:
     """Под ответом владельца пользователю — «Записаться на практикум»."""
     return InlineKeyboardMarkup(inline_keyboard=[[_button("buttons.practicum", MENU_PRACTICUM)]])
+
+
+# --- TASK-BOT-006: подарок за регистрацию -----------------------------------------------------
+
+
+def gift_kb() -> InlineKeyboardMarkup:
+    """«Забрать подарок» — ссылка на бота подарков (`links.gift_bot`)."""
+    button = InlineKeyboardButton(text=t("practicum.buttons.gift"), url=get_facts().links.gift_bot)
+    return InlineKeyboardMarkup(inline_keyboard=[[button]])

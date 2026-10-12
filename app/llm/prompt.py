@@ -3,6 +3,9 @@
 Цены, даты и время попадают в промпт только блоком ФАКТЫ, который собирается из
 `config/facts.yaml` хелперами `app.facts`. В правилах и в базе знаний (`knowledge/*.md`,
 её чистит `scripts/build_knowledge.py`) литералов цен и дат нет.
+
+Секретная фраза подарка (`gift.registration_phrase`, TASK-BOT-006) в промпт не попадает:
+её выдаёт только сценарий записи, а `guard.check` отклоняет ответ модели с ней.
 """
 
 from __future__ import annotations
@@ -83,6 +86,8 @@ def facts_block() -> str:
         f"- стоимость: {'бесплатно' if practicum.free else 'платно, условия уточняет Александр'}",
         f"- кейс: {practicum.case}",
         f"- материалы после практикума (запись и шаблон): {facts.links.gift_after_practicum}",
+        f"- подарок за регистрацию: после записи на практикум этот бот присылает инструкцию для бота подарков "
+        f"{facts.links.gift_bot}; что именно туда отправить, ты не знаешь и не называешь",
         "",
         f"Курс «{course.title}»",
         f"- {len(course.sessions)} занятия по {course.session_hours} часа по субботам: "
