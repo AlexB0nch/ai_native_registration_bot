@@ -8,6 +8,7 @@
 | [TASK-LLM-001](TASK-LLM-001.md) | Ответы по базе знаний | P0 | In Review | `feature/llm-answers` | #7 |
 | [TASK-API-001](TASK-API-001.md) | Заявки с сайта | P0 | In Review | `feature/site-registrations` | #4 |
 | [TASK-INFRA-001](TASK-INFRA-001.md) | Деплой на Coolify, runbook | P0 | In Review | `chore/runbook` | #3 |
+| [TASK-BOT-006](TASK-BOT-006.md) | Подарок за регистрацию: фраза для бота подарков | P0 | Ready | `feature/registration-gift` | — |
 | TASK-BOT-003 | Заявка на курс | P1 | Draft | — | — |
 | TASK-BOT-004 | Рассылки и напоминания | P1 | Draft | — | — |
 | TASK-BOT-005 | Лист ожидания | P1 | Draft | — | — |
