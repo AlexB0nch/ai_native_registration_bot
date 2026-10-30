@@ -138,7 +138,10 @@ async def test_setup_bot_on_start(tg: TgHarness, monkeypatch) -> None:
     assert commands[0]["scope"]["type"] == "default"
     admin = commands[1]
     assert admin["scope"] == {"type": "chat", "chat_id": ADMIN_ID}
-    assert [c["command"] for c in admin["commands"]] == [*public, "stats", "export", "link", "set_link", "whoami"]
+    assert [c["command"] for c in admin["commands"]] == [
+        *public,
+        *("stats", "export", "link", "set_link", "broadcast_practicum", "whoami"),
+    ]
 
 
 async def test_setup_bot_failure_is_not_fatal(tg: TgHarness, monkeypatch) -> None:
