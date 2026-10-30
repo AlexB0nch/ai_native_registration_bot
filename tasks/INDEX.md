@@ -9,6 +9,7 @@
 | [TASK-API-001](TASK-API-001.md) | Заявки с сайта | P0 | In Review | `feature/site-registrations` | #4 |
 | [TASK-INFRA-001](TASK-INFRA-001.md) | Деплой на Coolify, runbook | P0 | In Review | `chore/runbook` | #3 |
 | [TASK-BOT-006](TASK-BOT-006.md) | Подарок за регистрацию на практикум: фраза для бота подарков | P0 | In Review | `feature/registration-gift` | — |
+| [TASK-BOT-007](TASK-BOT-007.md) | Команда рассылки участникам практикума | P0 | In Review | `feature/broadcast` | — |
 | TASK-BOT-003 | Заявка на курс | P1 | Draft | — | — |
 | TASK-BOT-004 | Рассылки и напоминания | P1 | Draft | — | — |
 | TASK-BOT-005 | Лист ожидания | P1 | Draft | — | — |

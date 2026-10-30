@@ -192,3 +192,24 @@ def gift_kb() -> InlineKeyboardMarkup:
     """«Забрать подарок» — ссылка на бота подарков (`links.gift_bot`)."""
     button = InlineKeyboardButton(text=t("practicum.buttons.gift"), url=get_facts().links.gift_bot)
     return InlineKeyboardMarkup(inline_keyboard=[[button]])
+
+
+# --- TASK-BOT-007: подтверждение рассылки владельцем ------------------------------------------
+
+# «Отправить N» → `bc:send:<hash8>` (хеш текста: кнопка от другого текста не сработает), «Отмена» → `bc:cancel`.
+BC_SEND_PREFIX = "bc:send:"
+BC_CANCEL = "bc:cancel"
+
+
+def broadcast_confirm_kb(recipients: int, text_hash: str) -> InlineKeyboardMarkup:
+    send = InlineKeyboardButton(
+        text=t("broadcast.buttons.send", recipients=recipients), callback_data=f"{BC_SEND_PREFIX}{text_hash}"
+    )
+    return InlineKeyboardMarkup(inline_keyboard=[[send, _button("broadcast.buttons.cancel", BC_CANCEL)]])
+
+
+def parse_broadcast_send(data: str | None) -> str | None:
+    """`bc:send:1a2b3c4d` → `1a2b3c4d`; всё остальное → None."""
+    if not data or not data.startswith(BC_SEND_PREFIX):
+        return None
+    return data.removeprefix(BC_SEND_PREFIX) or None

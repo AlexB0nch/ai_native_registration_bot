@@ -11,7 +11,7 @@ from aiogram.client.session.base import BaseSession
 from aiogram.fsm.storage.base import BaseStorage
 from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
 
-from app.bot.handlers import admin, practicum, questions, start
+from app.bot.handlers import admin, broadcast, practicum, questions, start
 from app.bot.storage import DbStorage
 from app.config import Settings, get_settings
 from app.texts import t
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 ALLOWED_UPDATES = ["message", "callback_query"]
 PUBLIC_COMMANDS = ("start", "practicum", "course", "question")
-ADMIN_COMMANDS = ("stats", "export", "link", "set_link", "whoami")
+ADMIN_COMMANDS = ("stats", "export", "link", "set_link", "broadcast_practicum", "whoami")
 
 
 def build_bot(token: str | None = None, session: BaseSession | None = None) -> Bot:
@@ -35,8 +35,9 @@ def build_bot(token: str | None = None, session: BaseSession | None = None) -> B
 
 
 def _routers() -> list[Router]:
-    # Порядок важен: admin → start → practicum (FSM) → questions (catch-all).
-    return [admin.router, start.router, practicum.router, questions.router]
+    # Порядок важен: broadcast → admin → start → practicum (FSM) → questions (catch-all).
+    # broadcast раньше admin: команда рассылки должна работать и в состоянии «Ответить на вопрос».
+    return [broadcast.router, admin.router, start.router, practicum.router, questions.router]
 
 
 def _attach(dp: Dispatcher, router: Router) -> None:

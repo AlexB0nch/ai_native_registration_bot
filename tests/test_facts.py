@@ -201,6 +201,10 @@ def test_all_texts_render() -> None:
         *("name", "details", "text", "bot_answer"),
     )
     kwargs |= dict.fromkeys(admin_questions_fields, "x")
+
+    # TASK-BOT-007: подстановки раздела broadcast.*
+    broadcast_fields = ("recipients", "already", "without_telegram", "limit", "length", "sent", "blocked")
+    kwargs |= dict.fromkeys((*broadcast_fields, "failed", "skipped"), "x")
     for key, value in _walk(get_texts()):
         if isinstance(value, str):
             rendered = t(key, **kwargs)
